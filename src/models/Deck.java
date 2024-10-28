@@ -29,7 +29,7 @@ public class Deck {
 
     public Card dealCard() {
         if (!deck.isEmpty()) {
-            return deck.removeLast();
+            return deck.remove(deck.size() - 1);
         }
         return null; // Returns null if no cards are left
     }
