@@ -53,6 +53,10 @@ public class Table {
         this.currentBet = currentBet;
     }
 
+    public void resetCards(){
+        cards.clear();
+    }
+
     public void displayTable(){
         for(Player player: players){
             System.out.println(STR."\{player.getName()} \{player.getMoney()}");
