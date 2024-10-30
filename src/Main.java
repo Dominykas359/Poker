@@ -65,9 +65,9 @@ public class Main {
             // Deal two cards to each player
             players.forEach(player -> player.setCards(List.of(deck.dealCard(), deck.dealCard())));
 
+            //blind bets of the game
+            table.setCurrentAction("blind betting");
             table.displayTable();
-
-
             if (game.isBlinds()) {
                 // Set blinds
                 players.forEach(player -> {
@@ -97,7 +97,7 @@ public class Main {
                     }
 
                     if (currentPlayer.equals(human)) {
-                        System.out.println("Actions: c - call, r - raise, f - fold, a - all in");
+                        System.out.println("Actions: c - call/check, r - raise, f - fold, a - all in");
                         System.out.print("Your action: ");
                         String action = scanner.nextLine();
 
@@ -128,20 +128,21 @@ public class Main {
                 game.setBlinds(false);
                 game.setFlop(true);
                 players.forEach(player -> {
-                    player.setBet(0);
+                    player.setBet(-1);
                 });
-                table.setCurrentBet(bigBlind); // Start the next round with the big blind as the current bet
-
-                table.addCard(deck.dealCard());
-                table.addCard(deck.dealCard());
-                table.addCard(deck.dealCard());
+                table.setCurrentBet(0);
             }
-
-            // After dealing the flop
+            //after blind bets 3 cards are opened
+            table.addCard(deck.dealCard());
+            table.addCard(deck.dealCard());
+            table.addCard(deck.dealCard());
 
             Misc.cleanScreen();
-            table.displayTable();
+            players.removeIf(player -> player.getMoney() <= 0);
 
+            //flop stage of the game where 3 cards are open and bets are placed
+            table.setCurrentAction("flop betting");
+            table.displayTable();
             if (game.isFlop()) {
                 int turnIndex = 0;
 
@@ -155,7 +156,7 @@ public class Main {
                     }
 
                     if (currentPlayer.equals(human)) {
-                        System.out.println("Actions: r - raise, f - fold, a - all in");
+                        System.out.println("Actions: c - call/check, r - raise, f - fold, a - all in");
                         System.out.print("Your action: ");
                         String action = scanner.nextLine();
 
@@ -184,8 +185,137 @@ public class Main {
                 }
 
                 game.setFlop(false); // This indicates the end of the flop betting round
+                game.setTurn(true);
+
+                players.forEach(player -> {
+                    player.setBet(-1);
+                });
+                table.setCurrentBet(0);
             }
-            players.removeIf(player -> player.getMoney() <= 0); // Remove players with no money
+
+            //after flop stage of the game another card is opened
+            table.addCard(deck.dealCard());
+
+            Misc.cleanScreen();
+            players.removeIf(player -> player.getMoney() <= 0);
+
+            //turn stage of the game where 4 cards are opened and bets are placed
+            table.setCurrentAction("turn betting");
+            table.displayTable();
+            if(game.isTurn()){
+                int turnIndex = 0;
+
+                while (!allPlayersHaveMatchedBet(players, table.getCurrentBet())) {
+                    Player currentPlayer = players.get(turnIndex);
+
+                    // Skip folded players or players with no money
+                    if (currentPlayer.isFolded() || currentPlayer.getMoney() <= 0) {
+                        turnIndex = (turnIndex + 1) % players.size();
+                        continue;
+                    }
+
+                    if (currentPlayer.equals(human)) {
+                        System.out.println("Actions: c - call/check, r - raise, f - fold, a - all in");
+                        System.out.print("Your action: ");
+                        String action = scanner.nextLine();
+
+                        switch (action) {
+                            case "c":
+                                call(table, currentPlayer);
+                                break;
+                            case "r":
+                                raise(scanner, table, currentPlayer);
+                                break;
+                            case "f":
+                                currentPlayer.setFolded(true);
+                                break;
+                            case "a":
+                                allIn(table, currentPlayer);
+                                break;
+                            default:
+                                System.out.println("Choose a valid option!");
+                        }
+                    } else {
+                        call(table, currentPlayer);  // Automated call for computer players
+                    }
+
+                    table.displayTable();
+                    turnIndex = (turnIndex + 1) % players.size();
+                }
+
+                game.setTurn(false); // This indicates the end of the flop betting round
+                game.setRiver(true);
+
+                players.forEach(player -> {
+                    player.setBet(-1);
+                });
+                table.setCurrentBet(0);
+
+            }
+
+            //after turn fifth card are opened
+            table.addCard(deck.dealCard());
+
+            Misc.cleanScreen();
+            players.removeIf(player -> player.getMoney() <= 0);
+
+            //in the river stage of the game all 5 cards are opened and final bets are placed
+            table.setCurrentAction("river betting");
+            table.displayTable();
+            if(game.isRiver()){
+                int turnIndex = 0;
+
+                while (!allPlayersHaveMatchedBet(players, table.getCurrentBet())) {
+                    Player currentPlayer = players.get(turnIndex);
+
+                    // Skip folded players or players with no money
+                    if (currentPlayer.isFolded() || currentPlayer.getMoney() <= 0) {
+                        turnIndex = (turnIndex + 1) % players.size();
+                        continue;
+                    }
+
+                    if (currentPlayer.equals(human)) {
+                        System.out.println("Actions: c - call/check, r - raise, f - fold, a - all in");
+                        System.out.print("Your action: ");
+                        String action = scanner.nextLine();
+
+                        switch (action) {
+                            case "c":
+                                call(table, currentPlayer);
+                                break;
+                            case "r":
+                                raise(scanner, table, currentPlayer);
+                                break;
+                            case "f":
+                                currentPlayer.setFolded(true);
+                                break;
+                            case "a":
+                                allIn(table, currentPlayer);
+                                break;
+                            default:
+                                System.out.println("Choose a valid option!");
+                        }
+                    } else {
+                        call(table, currentPlayer);  // Automated call for computer players
+                    }
+
+                    table.displayTable();
+                    turnIndex = (turnIndex + 1) % players.size();
+                }
+
+                game.setRiver(false);
+
+                players.forEach(player -> {
+                    player.setBet(-1);
+                });
+                table.setCurrentBet(0);
+            }
+            Misc.cleanScreen();
+            table.displayTable();
+            players.removeIf(player -> player.getMoney() <= 0);
+
+            //after final bet the winner is calculated
+
         }
     }
 
@@ -202,6 +332,11 @@ public class Main {
         // Check if the player can cover the amount they need to bet
         if (amountToBet <= 0) {
             // No need to bet anything (already matched or over bet)
+            return;
+        }
+
+        if(player.getBet() == -1 && table.getCurrentBet() == 0){
+            player.setBet(0);
             return;
         }
 
