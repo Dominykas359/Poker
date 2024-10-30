@@ -8,7 +8,7 @@ import java.util.List;
 
 public class CalculateHand {
 
-    public Hand calculateBestHand(List<Card> playerCards, List<Card> communityCards) {
+    public static Hand calculateBestHand(List<Card> playerCards, List<Card> communityCards) {
         List<Card> allCards = new ArrayList<>(playerCards);
         allCards.addAll(communityCards);
 
@@ -23,7 +23,7 @@ public class CalculateHand {
         return Collections.max(possibleHands, Comparator.comparingInt(Hand::getRankValue));
     }
 
-    private Hand evaluateHand(List<Card> hand) {
+    private static Hand evaluateHand(List<Card> hand) {
         if (isRoyalFlush(hand)) return new Hand(10, hand);        // Royal Flush
         if (isStraightFlush(hand)) return new Hand(9, hand);      // Straight Flush
         if (isFourOfAKind(hand)) return new Hand(8, hand);        // Four of a Kind
@@ -36,29 +36,29 @@ public class CalculateHand {
         return new Hand(1, hand);                                 // High Card
     }
 
-    private boolean isRoyalFlush(List<Card> hand) {
+    private static boolean isRoyalFlush(List<Card> hand) {
         return isStraightFlush(hand) && hand.stream().anyMatch(card -> card.getRank() == 1);
     }
 
-    private boolean isStraightFlush(List<Card> hand) {
+    private static boolean isStraightFlush(List<Card> hand) {
         return isFlush(hand) && isStraight(hand);
     }
 
-    private boolean isFourOfAKind(List<Card> hand) {
+    private static boolean isFourOfAKind(List<Card> hand) {
         return hasNOfAKind(hand, 4);
     }
 
-    private boolean isFullHouse(List<Card> hand) {
+    private static boolean isFullHouse(List<Card> hand) {
         return hasNOfAKind(hand, 3) && hasNOfAKind(hand, 2);
     }
 
-    private boolean isFlush(List<Card> hand) {
+    private static boolean isFlush(List<Card> hand) {
         int suit = hand.get(0).getSuit();
         return hand.stream().allMatch(card -> card.getSuit() == suit);
     }
 
-    private boolean isStraight(List<Card> hand) {
-        List<Integer> ranks = hand.stream().map(Card::getRank).sorted().toList();
+    private static boolean isStraight(List<Card> hand) {
+        List<Integer> ranks = new ArrayList<>(hand.stream().map(Card::getRank).sorted().toList());
 
         // Handle Ace as high or low
         if (ranks.get(0) == 1 && ranks.get(4) == 13) {
@@ -72,21 +72,21 @@ public class CalculateHand {
         return true;
     }
 
-    private boolean isThreeOfAKind(List<Card> hand) {
+    private static boolean isThreeOfAKind(List<Card> hand) {
         return hasNOfAKind(hand, 3);
     }
 
-    private boolean isTwoPair(List<Card> hand) {
+    private static boolean isTwoPair(List<Card> hand) {
         long distinctRanks = hand.stream().map(Card::getRank).distinct().count();
         return distinctRanks == 3;
     }
 
-    private boolean isPair(List<Card> hand) {
+    private static boolean isPair(List<Card> hand) {
         long distinctRanks = hand.stream().map(Card::getRank).distinct().count();
         return distinctRanks == 4;
     }
 
-    private boolean hasNOfAKind(List<Card> hand, int n) {
+    private static boolean hasNOfAKind(List<Card> hand, int n) {
         for (Card card : hand) {
             int count = (int) hand.stream().filter(c -> c.getRank() == card.getRank()).count();
             if (count == n) return true;
@@ -94,7 +94,7 @@ public class CalculateHand {
         return false;
     }
 
-    private List<List<Card>> generateFiveCardCombinations(List<Card> cards) {
+    private static List<List<Card>> generateFiveCardCombinations(List<Card> cards) {
         List<List<Card>> combinations = new ArrayList<>();
         int n = cards.size();
         for (int i = 0; i < n; i++) {
