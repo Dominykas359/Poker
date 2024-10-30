@@ -1,7 +1,9 @@
 import models.Deck;
+import models.Hand;
 import models.Player;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -42,10 +44,10 @@ public class Main {
 
         Misc.cleanScreen();
 
-        Player human = new Player(name, money, true, false, 0, false, false);
-        Player computer1 = new Player("Computer1", money, false, true, 0, false, false);
-        Player computer2 = new Player("Computer2", money, false, false, 0, false, false);
-        Player computer3 = new Player("Computer3", money, false, false, 0, false, false);
+        Player human = new Player(name, money, true, false, 0, false);
+        Player computer1 = new Player("Computer1", money, false, true, 0, false);
+        Player computer2 = new Player("Computer2", money, false, false, 0, false);
+        Player computer3 = new Player("Computer3", money, false, false, 0, false);
 
         List<Player> players = new ArrayList<>(List.of(human, computer1, computer2, computer3));
         table.addPlayer(human);
@@ -65,6 +67,10 @@ public class Main {
             // Deal two cards to each player
             players.forEach(player -> player.setCards(List.of(deck.dealCard(), deck.dealCard())));
 
+            shiftBlinds(players);
+
+            int turnIndex = getIndexOfNextPlayerAfterBigBlind(players);
+
             //blind bets of the game
             table.setCurrentAction("blind betting");
             table.displayTable();
@@ -76,22 +82,19 @@ public class Main {
                         player.setBet(smallBlind);
                         table.setPrizeMoney(table.getPrizeMoney() + smallBlind);
                         table.setCurrentBet(smallBlind);
-                        player.setSmallBlind(false);
                     } else if (player.isBigBlind() && player.getMoney() >= bigBlind) {
                         player.setMoney(player.getMoney() - bigBlind);
                         player.setBet(bigBlind);
                         table.setPrizeMoney(table.getPrizeMoney() + bigBlind);
                         table.setCurrentBet(bigBlind);
-                        player.setBigBlind(false);
                     }
                 });
 
-                int turnIndex = 2; // Start turns after the big blind player
                 while (!allPlayersHaveMatchedBet(players, table.getCurrentBet())) {
                     Player currentPlayer = players.get(turnIndex);
 
                     // Skip folded players or players with no money
-                    if (currentPlayer.isFolded() || currentPlayer.getMoney() <= 0) {
+                    if (currentPlayer.isFolded()) {
                         turnIndex = (turnIndex + 1) % players.size();
                         continue;
                     }
@@ -112,7 +115,7 @@ public class Main {
                                 currentPlayer.setFolded(true);
                                 break;
                             case "a":
-                                allIn(table, currentPlayer);
+                                allIn(table, currentPlayer, game);
                                 break;
                             default:
                                 System.out.println("Choose a valid option!");
@@ -132,6 +135,16 @@ public class Main {
                 });
                 table.setCurrentBet(0);
             }
+            if (onlyOnePlayerRemaining(players)) {
+                Player winner = players.stream().filter(player -> !player.isFolded()).findFirst().orElse(null);
+                if (winner != null) {
+                    awardPrizeMoney(winner, table);
+                    continue; // Move to the next round
+                }
+            }
+            if (countPlayersWithMoney(players)) { // Adjust this line
+                game.setPlaying(false);
+            }
             //after blind bets 3 cards are opened
             table.addCard(deck.dealCard());
             table.addCard(deck.dealCard());
@@ -144,18 +157,20 @@ public class Main {
             table.setCurrentAction("flop betting");
             table.displayTable();
             if (game.isFlop()) {
-                int turnIndex = 0;
 
                 while (!allPlayersHaveMatchedBet(players, table.getCurrentBet())) {
+                    if (onlyOnePlayerRemaining(players)) {
+                        break; // Exit the loop if only one player remains
+                    }
                     Player currentPlayer = players.get(turnIndex);
 
                     // Skip folded players or players with no money
-                    if (currentPlayer.isFolded() || currentPlayer.getMoney() <= 0) {
+                    if (currentPlayer.isFolded()) {
                         turnIndex = (turnIndex + 1) % players.size();
                         continue;
                     }
 
-                    if (currentPlayer.equals(human)) {
+                    if (currentPlayer.equals(human) && !currentPlayer.isFolded()) {
                         System.out.println("Actions: c - call/check, r - raise, f - fold, a - all in");
                         System.out.print("Your action: ");
                         String action = scanner.nextLine();
@@ -171,12 +186,12 @@ public class Main {
                                 currentPlayer.setFolded(true);
                                 break;
                             case "a":
-                                allIn(table, currentPlayer);
+                                allIn(table, currentPlayer, game);
                                 break;
                             default:
                                 System.out.println("Choose a valid option!");
                         }
-                    } else {
+                    } else if(!currentPlayer.equals(human) && !currentPlayer.isFolded()){
                         call(table, currentPlayer);  // Automated call for computer players
                     }
 
@@ -192,6 +207,16 @@ public class Main {
                 });
                 table.setCurrentBet(0);
             }
+            if (onlyOnePlayerRemaining(players)) {
+                Player winner = players.stream().filter(player -> !player.isFolded()).findFirst().orElse(null);
+                if (winner != null) {
+                    awardPrizeMoney(winner, table);
+                    continue; // Move to the next round
+                }
+            }
+            if (countPlayersWithMoney(players)) { // Adjust this line
+                game.setPlaying(false);
+            }
 
             //after flop stage of the game another card is opened
             table.addCard(deck.dealCard());
@@ -203,18 +228,20 @@ public class Main {
             table.setCurrentAction("turn betting");
             table.displayTable();
             if(game.isTurn()){
-                int turnIndex = 0;
 
                 while (!allPlayersHaveMatchedBet(players, table.getCurrentBet())) {
+                    if (onlyOnePlayerRemaining(players)) {
+                        break; // Exit the loop if only one player remains
+                    }
                     Player currentPlayer = players.get(turnIndex);
 
                     // Skip folded players or players with no money
-                    if (currentPlayer.isFolded() || currentPlayer.getMoney() <= 0) {
+                    if (currentPlayer.isFolded()) {
                         turnIndex = (turnIndex + 1) % players.size();
                         continue;
                     }
 
-                    if (currentPlayer.equals(human)) {
+                    if (currentPlayer.equals(human) && !currentPlayer.isFolded()) {
                         System.out.println("Actions: c - call/check, r - raise, f - fold, a - all in");
                         System.out.print("Your action: ");
                         String action = scanner.nextLine();
@@ -230,12 +257,12 @@ public class Main {
                                 currentPlayer.setFolded(true);
                                 break;
                             case "a":
-                                allIn(table, currentPlayer);
+                                allIn(table, currentPlayer, game);
                                 break;
                             default:
                                 System.out.println("Choose a valid option!");
                         }
-                    } else {
+                    } else if(!currentPlayer.equals(human) && !currentPlayer.isFolded()) {
                         call(table, currentPlayer);  // Automated call for computer players
                     }
 
@@ -252,6 +279,16 @@ public class Main {
                 table.setCurrentBet(0);
 
             }
+            if (onlyOnePlayerRemaining(players)) {
+                Player winner = players.stream().filter(player -> !player.isFolded()).findFirst().orElse(null);
+                if (winner != null) {
+                    awardPrizeMoney(winner, table);
+                    continue; // Move to the next round
+                }
+            }
+            if (countPlayersWithMoney(players)) { // Adjust this line
+                game.setPlaying(false);
+            }
 
             //after turn fifth card are opened
             table.addCard(deck.dealCard());
@@ -263,18 +300,20 @@ public class Main {
             table.setCurrentAction("river betting");
             table.displayTable();
             if(game.isRiver()){
-                int turnIndex = 0;
 
                 while (!allPlayersHaveMatchedBet(players, table.getCurrentBet())) {
+                    if (onlyOnePlayerRemaining(players)) {
+                        break; // Exit the loop if only one player remains
+                    }
                     Player currentPlayer = players.get(turnIndex);
 
                     // Skip folded players or players with no money
-                    if (currentPlayer.isFolded() || currentPlayer.getMoney() <= 0) {
+                    if (currentPlayer.isFolded()) {
                         turnIndex = (turnIndex + 1) % players.size();
                         continue;
                     }
 
-                    if (currentPlayer.equals(human)) {
+                    if (currentPlayer.equals(human) && !currentPlayer.isFolded()) {
                         System.out.println("Actions: c - call/check, r - raise, f - fold, a - all in");
                         System.out.print("Your action: ");
                         String action = scanner.nextLine();
@@ -290,12 +329,12 @@ public class Main {
                                 currentPlayer.setFolded(true);
                                 break;
                             case "a":
-                                allIn(table, currentPlayer);
+                                allIn(table, currentPlayer, game);
                                 break;
                             default:
                                 System.out.println("Choose a valid option!");
                         }
-                    } else {
+                    } else if(!currentPlayer.equals(human) && !currentPlayer.isFolded()){
                         call(table, currentPlayer);  // Automated call for computer players
                     }
 
@@ -310,17 +349,37 @@ public class Main {
                 });
                 table.setCurrentBet(0);
             }
+            if (onlyOnePlayerRemaining(players)) {
+                Player winner = players.stream().filter(player -> !player.isFolded()).findFirst().orElse(null);
+                if (winner != null) {
+                    awardPrizeMoney(winner, table);
+                    continue; // Move to the next round
+                }
+            }
+            if (countPlayersWithMoney(players)) { // Adjust this line
+                game.setPlaying(false);
+            }
             Misc.cleanScreen();
             table.displayTable();
             players.removeIf(player -> player.getMoney() <= 0);
 
-            //after final bet the winner is calculated
+            players.forEach(player -> {
+                Hand hand = CalculateHand.calculateBestHand(player.getCards(), table.getCards());
+                player.setScore(hand.getRankValue());
+            });
 
+            //after final bet the winner is calculated
+            Player winner = determineWinner(players);
+            awardPrizeMoney(winner, table);
+            table.resetCards();
+            if(players.size() == 1) game.setPlaying(false);
+            else game.setBlinds(true);
         }
     }
 
     private static boolean allPlayersHaveMatchedBet(List<Player> players, double currentBet) {
         return players.stream()
+                .filter(player -> !player.isFolded())  // Only consider active players
                 .allMatch(player -> player.getBet() == currentBet);
     }
 
@@ -353,6 +412,7 @@ public class Main {
 
         // Update the prize money with the amount bet
         table.setPrizeMoney(table.getPrizeMoney() + amountToBet);
+        if (player.getMoney() <= 0) player.setFolded(true);
     }
 
 
@@ -378,13 +438,84 @@ public class Main {
         table.setCurrentBet(player.getBet()); // Update current bet to player's total bet
         table.setPrizeMoney(table.getPrizeMoney() + raisedMoney);
         player.setMoney(player.getMoney() - raisedMoney);
+        if (player.getMoney() <= 0) player.setFolded(true);
     }
 
     // Helper function to handle all-in action
-    private static void allIn(Table table, Player player) {
+    private static void allIn(Table table, Player player, Game game) {
         table.setCurrentBet(player.getBet() + player.getMoney());
         table.setPrizeMoney(table.getPrizeMoney() + player.getMoney());
         player.setBet(player.getBet() + player.getMoney());
         player.setMoney(0);
+        game.setFlop(false);
+        game.setTurn(false);
+        game.setRiver(false);
+        if (player.getMoney() <= 0) player.setFolded(true);
+    }
+
+    private static void shiftBlinds(List<Player> players) {
+        int numPlayers = players.size();
+
+        // Find the current small and big blinds
+        int smallBlindIndex = -1;
+        int bigBlindIndex = -1;
+        for (int i = 0; i < numPlayers; i++) {
+            if (players.get(i).isSmallBlind()) {
+                smallBlindIndex = i;
+            }
+            if (players.get(i).isBigBlind()) {
+                bigBlindIndex = i;
+            }
+        }
+
+        // Clear current blinds
+        if (smallBlindIndex != -1) {
+            players.get(smallBlindIndex).setSmallBlind(false);
+        }
+        if (bigBlindIndex != -1) {
+            players.get(bigBlindIndex).setBigBlind(false);
+        }
+
+        // Set new blinds, rotating to the next players in the list
+        players.get((smallBlindIndex + 1) % numPlayers).setSmallBlind(true);
+        players.get((bigBlindIndex + 1) % numPlayers).setBigBlind(true);
+    }
+
+    private static int getIndexOfNextPlayerAfterBigBlind(List<Player> players) {
+        for (int i = 0; i < players.size(); i++) {
+            if (players.get(i).isBigBlind()) {
+                return (i + 1) % players.size();
+            }
+        }
+        return 0;
+    }
+
+    private static Player determineWinner(List<Player> players) {
+        return players.stream()
+                .filter(player -> !player.isFolded())
+                .max(Comparator.comparingInt(Player::getScore))
+                .orElse(null);
+    }
+
+    // Award the prize money to the winning player
+    private static void awardPrizeMoney(Player winner, Table table) {
+        if (winner != null) {
+            winner.setMoney(winner.getMoney() + table.getPrizeMoney());
+            System.out.println(STR."\{winner.getName()} wins the round with $\{table.getPrizeMoney()}");
+        }
+        table.setPrizeMoney(0); // Reset the prize money for the next round
+    }
+
+    private static boolean onlyOnePlayerRemaining(List<Player> players) {
+        return players.stream().filter(player -> !player.isFolded()).count() == 1;
+    }
+
+    private static boolean countPlayersWithMoney(List<Player> players) {
+        int count = 0;
+        for(Player player: players){
+            if(player.getMoney() == 0) count++;
+        }
+
+        return count == 3;
     }
 }
