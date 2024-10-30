@@ -11,17 +11,16 @@ public class Player {
     private boolean move;
     private boolean folded;
     private double bet;
-    private boolean lost;
+    private int score;
     private List<Card> cards;
 
-    public Player(String name, double money, boolean smallBlind, boolean bigBlind, double bet, boolean folded, boolean lost){
+    public Player(String name, double money, boolean smallBlind, boolean bigBlind, double bet, boolean folded){
         this.name = name;
         this.money = money;
         this.smallBlind = smallBlind;
         this.bigBlind = bigBlind;
         this.bet = bet;
         this.folded = folded;
-        this.lost = lost;
     }
 
     public String getName() {
@@ -88,11 +87,11 @@ public class Player {
         this.folded = folded;
     }
 
-    public boolean isLost() {
-        return lost;
+    public int getScore() {
+        return score;
     }
 
-    public void setLost(boolean lost) {
-        this.lost = lost;
+    public void setScore(int score) {
+        this.score = score;
     }
 }
