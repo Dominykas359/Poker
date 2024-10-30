@@ -59,9 +59,11 @@ public class Table {
         }
         System.out.println(STR."Prize money: \{prizeMoney}");
 
+        System.out.println(STR."Stage if the game: \{currentAction}");
+
         System.out.println(" ");
         for(Card card: cards){
-            System.out.print(STR."\{card} ");
+            System.out.print(STR."[\{card}] ");
         }
         System.out.println(" ");
 
