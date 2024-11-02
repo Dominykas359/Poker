@@ -44,10 +44,10 @@ public class Main {
 
         Misc.cleanScreen();
 
-        Player human = new Player(name, money, true, false, 0, false);
-        Player computer1 = new Player("Computer1", money, false, true, 0, false);
-        Player computer2 = new Player("Computer2", money, false, false, 0, false);
-        Player computer3 = new Player("Computer3", money, false, false, 0, false);
+        Player human = new Player(name, money, true, false, 0, false, false);
+        Player computer1 = new Player("Computer1", money, false, true, 0, false, false);
+        Player computer2 = new Player("Computer2", money, false, false, 0, false, false);
+        Player computer3 = new Player("Computer3", money, false, false, 0, false, false);
 
         List<Player> players = new ArrayList<>(List.of(human, computer1, computer2, computer3));
         table.addPlayer(human);
@@ -82,11 +82,13 @@ public class Main {
                         player.setBet(smallBlind);
                         table.setPrizeMoney(table.getPrizeMoney() + smallBlind);
                         table.setCurrentBet(smallBlind);
+                        player.setMoved(true);
                     } else if (player.isBigBlind() && player.getMoney() >= bigBlind) {
                         player.setMoney(player.getMoney() - bigBlind);
                         player.setBet(bigBlind);
                         table.setPrizeMoney(table.getPrizeMoney() + bigBlind);
                         table.setCurrentBet(bigBlind);
+                        player.setMoved(true);
                     }
                 });
 
@@ -131,7 +133,8 @@ public class Main {
                 game.setBlinds(false);
                 game.setFlop(true);
                 players.forEach(player -> {
-                    player.setBet(-1);
+                    player.setBet(0);
+                    player.setMoved(false);
                 });
                 table.setCurrentBet(0);
             }
@@ -203,7 +206,8 @@ public class Main {
                 game.setTurn(true);
 
                 players.forEach(player -> {
-                    player.setBet(-1);
+                    player.setBet(0);
+                    player.setMoved(false);
                 });
                 table.setCurrentBet(0);
             }
@@ -274,7 +278,8 @@ public class Main {
                 game.setRiver(true);
 
                 players.forEach(player -> {
-                    player.setBet(-1);
+                    player.setBet(0);
+                    player.setMoved(false);
                 });
                 table.setCurrentBet(0);
 
@@ -345,7 +350,8 @@ public class Main {
                 game.setRiver(false);
 
                 players.forEach(player -> {
-                    player.setBet(-1);
+                    player.setBet(0);
+                    player.setMoved(false);
                 });
                 table.setCurrentBet(0);
             }
@@ -361,7 +367,6 @@ public class Main {
             }
             Misc.cleanScreen();
             table.displayTable();
-            players.removeIf(player -> player.getMoney() <= 0);
 
             players.forEach(player -> {
                 Hand hand = CalculateHand.calculateBestHand(player.getCards(), table.getCards());
@@ -372,15 +377,24 @@ public class Main {
             Player winner = determineWinner(players);
             awardPrizeMoney(winner, table);
             table.resetCards();
-            if(players.size() == 1) game.setPlaying(false);
-            else game.setBlinds(true);
+            players.forEach(player -> {
+                if (player.equals(human) && player.getMoney() == 0) game.setPlaying(false);
+            });
+            if(players.size() == 1){
+                game.setPlaying(false);
+                break;
+            }
+            else {
+                game.setBlinds(true);
+            }
+            players.removeIf(player -> player.getMoney() <= 0);
         }
     }
 
     private static boolean allPlayersHaveMatchedBet(List<Player> players, double currentBet) {
         return players.stream()
                 .filter(player -> !player.isFolded())  // Only consider active players
-                .allMatch(player -> player.getBet() == currentBet);
+                .allMatch(player -> player.getBet() == currentBet && player.isMoved());
     }
 
     // Helper function to call a bet
@@ -390,12 +404,14 @@ public class Main {
 
         // Check if the player can cover the amount they need to bet
         if (amountToBet <= 0) {
+            player.setMoved(true);
             // No need to bet anything (already matched or over bet)
             return;
         }
 
-        if(player.getBet() == -1 && table.getCurrentBet() == 0){
+        if(player.getBet() == 0 && table.getCurrentBet() == 0){
             player.setBet(0);
+            player.setMoved(true);
             return;
         }
 
@@ -403,11 +419,13 @@ public class Main {
             // Player can call the bet
             player.setMoney(player.getMoney() - amountToBet); // Deduct from player's money
             player.setBet(player.getBet() + amountToBet); // Update player's total bet
+            player.setMoved(true);
         } else {
             // Player goes all-in
             amountToBet = player.getMoney(); // They can only bet what they have
             player.setBet(player.getBet() + amountToBet); // Update player's bet
             player.setMoney(0); // Player is now out of money
+            player.setMoved(true);
         }
 
         // Update the prize money with the amount bet
@@ -439,6 +457,7 @@ public class Main {
         table.setPrizeMoney(table.getPrizeMoney() + raisedMoney);
         player.setMoney(player.getMoney() - raisedMoney);
         if (player.getMoney() <= 0) player.setFolded(true);
+        player.setMoved(true);
     }
 
     // Helper function to handle all-in action
@@ -451,6 +470,7 @@ public class Main {
         game.setTurn(false);
         game.setRiver(false);
         if (player.getMoney() <= 0) player.setFolded(true);
+        player.setMoved(true);
     }
 
     private static void shiftBlinds(List<Player> players) {
