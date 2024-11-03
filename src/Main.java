@@ -83,12 +83,14 @@ public class Main {
                         table.setPrizeMoney(table.getPrizeMoney() + smallBlind);
                         table.setCurrentBet(smallBlind);
                         player.setMoved(true);
+                        table.addActionHistory(STR."\{player.getName()} set the small blind for \{smallBlind}.");
                     } else if (player.isBigBlind() && player.getMoney() >= bigBlind) {
                         player.setMoney(player.getMoney() - bigBlind);
                         player.setBet(bigBlind);
                         table.setPrizeMoney(table.getPrizeMoney() + bigBlind);
                         table.setCurrentBet(bigBlind);
                         player.setMoved(true);
+                        table.addActionHistory(STR."\{player.getName()} set the big blind for \{bigBlind}.");
                     }
                 });
 
@@ -115,6 +117,7 @@ public class Main {
                                 break;
                             case "f":
                                 currentPlayer.setFolded(true);
+                                table.addActionHistory(STR."\{currentPlayer.getName()} folded.");
                                 break;
                             case "a":
                                 allIn(table, currentPlayer, game);
@@ -187,6 +190,7 @@ public class Main {
                                 break;
                             case "f":
                                 currentPlayer.setFolded(true);
+                                table.addActionHistory(STR."\{currentPlayer.getName()} folded.");
                                 break;
                             case "a":
                                 allIn(table, currentPlayer, game);
@@ -218,7 +222,7 @@ public class Main {
                     continue; // Move to the next round
                 }
             }
-            if (countPlayersWithMoney(players)) { // Adjust this line
+            if (countPlayersWithMoney(players)) {
                 game.setPlaying(false);
             }
 
@@ -259,6 +263,7 @@ public class Main {
                                 break;
                             case "f":
                                 currentPlayer.setFolded(true);
+                                table.addActionHistory(STR."\{currentPlayer.getName()} folded.");
                                 break;
                             case "a":
                                 allIn(table, currentPlayer, game);
@@ -291,11 +296,11 @@ public class Main {
                     continue; // Move to the next round
                 }
             }
-            if (countPlayersWithMoney(players)) { // Adjust this line
+            if (countPlayersWithMoney(players)) {
                 game.setPlaying(false);
             }
 
-            //after turn fifth card are opened
+            //after turn fifth card is opened
             table.addCard(deck.dealCard());
 
             Misc.cleanScreen();
@@ -332,6 +337,7 @@ public class Main {
                                 break;
                             case "f":
                                 currentPlayer.setFolded(true);
+                                table.addActionHistory(STR."\{currentPlayer.getName()} folded.");
                                 break;
                             case "a":
                                 allIn(table, currentPlayer, game);
@@ -362,7 +368,7 @@ public class Main {
                     continue; // Move to the next round
                 }
             }
-            if (countPlayersWithMoney(players)) { // Adjust this line
+            if (countPlayersWithMoney(players)) {
                 game.setPlaying(false);
             }
             Misc.cleanScreen();
@@ -378,7 +384,9 @@ public class Main {
             awardPrizeMoney(winner, table);
             table.resetCards();
             players.forEach(player -> {
-                if (player.equals(human) && player.getMoney() == 0) game.setPlaying(false);
+                if (player.equals(human) && player.getMoney() == 0){
+                    game.setPlaying(false);
+                }
             });
             if(players.size() == 1){
                 game.setPlaying(false);
@@ -389,15 +397,18 @@ public class Main {
             }
             players.removeIf(player -> player.getMoney() <= 0);
         }
+        Misc.cleanScreen();
+        for(Player player: players){
+            System.out.println(STR."\{player.getName()} won the game");
+        }
     }
 
     private static boolean allPlayersHaveMatchedBet(List<Player> players, double currentBet) {
         return players.stream()
-                .filter(player -> !player.isFolded())  // Only consider active players
+                .filter(player -> !player.isFolded())
                 .allMatch(player -> player.getBet() == currentBet && player.isMoved());
     }
 
-    // Helper function to call a bet
     private static void call(Table table, Player player) {
         double currentBet = table.getCurrentBet();  // Get the current bet
         double amountToBet = currentBet - player.getBet(); // Calculate how much more the player needs to bet to call
@@ -406,12 +417,14 @@ public class Main {
         if (amountToBet <= 0) {
             player.setMoved(true);
             // No need to bet anything (already matched or over bet)
+            table.addActionHistory(STR."\{player.getName()} called for $\{amountToBet}.");
             return;
         }
 
         if(player.getBet() == 0 && table.getCurrentBet() == 0){
             player.setBet(0);
             player.setMoved(true);
+            table.addActionHistory(STR."\{player.getName()} called for $\{amountToBet}.");
             return;
         }
 
@@ -420,12 +433,14 @@ public class Main {
             player.setMoney(player.getMoney() - amountToBet); // Deduct from player's money
             player.setBet(player.getBet() + amountToBet); // Update player's total bet
             player.setMoved(true);
+            table.addActionHistory(STR."\{player.getName()} called for $\{amountToBet}.");
         } else {
             // Player goes all-in
             amountToBet = player.getMoney(); // They can only bet what they have
             player.setBet(player.getBet() + amountToBet); // Update player's bet
             player.setMoney(0); // Player is now out of money
             player.setMoved(true);
+            table.addActionHistory(STR."\{player.getName()} called for $\{amountToBet}.");
         }
 
         // Update the prize money with the amount bet
@@ -433,8 +448,6 @@ public class Main {
         if (player.getMoney() <= 0) player.setFolded(true);
     }
 
-
-    // Helper function to handle raise action
     private static void raise(Scanner scanner, Table table, Player player) {
         System.out.print("Enter amount of money you want to raise: ");
         double raisedMoney;
@@ -458,6 +471,7 @@ public class Main {
         player.setMoney(player.getMoney() - raisedMoney);
         if (player.getMoney() <= 0) player.setFolded(true);
         player.setMoved(true);
+        table.addActionHistory(STR."\{player.getName()} raised $ \{raisedMoney}.");
     }
 
     // Helper function to handle all-in action
@@ -471,6 +485,7 @@ public class Main {
         game.setRiver(false);
         if (player.getMoney() <= 0) player.setFolded(true);
         player.setMoved(true);
+        table.addActionHistory(STR."\{player.getName()} went all in.");
     }
 
     private static void shiftBlinds(List<Player> players) {
@@ -521,7 +536,7 @@ public class Main {
     private static void awardPrizeMoney(Player winner, Table table) {
         if (winner != null) {
             winner.setMoney(winner.getMoney() + table.getPrizeMoney());
-            System.out.println(STR."\{winner.getName()} wins the round with $\{table.getPrizeMoney()}");
+            table.addActionHistory(STR."\{winner.getName()} wins the round with $\{table.getPrizeMoney()}");
         }
         table.setPrizeMoney(0); // Reset the prize money for the next round
     }
