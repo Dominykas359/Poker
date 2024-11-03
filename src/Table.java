@@ -10,8 +10,18 @@ public class Table {
     private String currentAction;
     private double currentBet;
 
-    private List<Player> players = new ArrayList<>();
-    private List<Card> cards = new ArrayList<>();
+    private final List<Player> players = new ArrayList<>();
+    private final List<Card> cards = new ArrayList<>();
+    private List<String> actionHistory = new ArrayList<>();
+
+    public List<String> getActionHistory() {
+        return actionHistory;
+    }
+
+    public void addActionHistory(String action) {
+        if(actionHistory.size() == 5) actionHistory.remove(0);
+        actionHistory.add(action);
+    }
 
     public void addPlayer(Player player) {
         players.add(player);
@@ -58,19 +68,37 @@ public class Table {
     }
 
     public void displayTable(){
-        for(Player player: players){
-            System.out.println(STR."\{player.getName()} \{player.getMoney()}");
-        }
-        System.out.println(STR."Prize money: \{prizeMoney}");
 
-        System.out.println(STR."Stage if the game: \{currentAction}");
+        Misc.cleanScreen();
+
+        System.out.println("Last 5 actions: ");
+        if (actionHistory.isEmpty()) {
+            System.out.println("No actions yet.");
+        } else {
+            for (String action : actionHistory) {
+                System.out.println(action);
+            }
+        }
+        System.out.println(" ");
+        System.out.println(STR."Stage of the game: \{currentAction}");
+        System.out.println(" ");
+
+        for(Player player: players){
+            System.out.println(STR."\{player.getName()} $\{player.getMoney()}");
+        }
 
         System.out.println(" ");
+
+        System.out.print("Community cards: ");
         for(Card card: cards){
             System.out.print(STR."[\{card}] ");
         }
         System.out.println(" ");
 
+        System.out.println(STR."Prize money: \{prizeMoney}");
+        System.out.println(" ");
+
         System.out.println(STR."Your cards: \{players.get(0).getCards()}");
+
     }
 }
