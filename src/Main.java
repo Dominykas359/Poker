@@ -122,6 +122,9 @@ public class Main {
                             case "a":
                                 allIn(table, currentPlayer, game);
                                 break;
+                            case "x":
+                                System.exit(0);
+                                break;
                             default:
                                 System.out.println("Choose a valid option!");
                         }
@@ -194,6 +197,9 @@ public class Main {
                                 break;
                             case "a":
                                 allIn(table, currentPlayer, game);
+                                break;
+                            case "x":
+                                System.exit(0);
                                 break;
                             default:
                                 System.out.println("Choose a valid option!");
@@ -268,6 +274,9 @@ public class Main {
                             case "a":
                                 allIn(table, currentPlayer, game);
                                 break;
+                            case "x":
+                                System.exit(0);
+                                break;
                             default:
                                 System.out.println("Choose a valid option!");
                         }
@@ -341,6 +350,9 @@ public class Main {
                                 break;
                             case "a":
                                 allIn(table, currentPlayer, game);
+                                break;
+                            case "x":
+                                System.exit(0);
                                 break;
                             default:
                                 System.out.println("Choose a valid option!");
