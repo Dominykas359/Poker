@@ -1,3 +1,6 @@
+import misc.Game;
+import misc.Misc;
+
 import java.util.Scanner;
 
 public class Menu {
