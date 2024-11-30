@@ -8,6 +8,7 @@ import java.util.List;
 
 public class Table {
 
+    private static Table instance;
     private double prizeMoney;
     private String currentAction;
     private double currentBet;
@@ -18,6 +19,21 @@ public class Table {
 
     public List<String> getActionHistory() {
         return actionHistory;
+    }
+
+    // Private constructor to prevent external instantiation
+    private Table() {}
+
+    // Method to get the single instance of Table
+    public static Table getInstance() {
+        if (instance == null) {
+            synchronized (Table.class) {
+                if (instance == null) {
+                    instance = new Table();
+                }
+            }
+        }
+        return instance;
     }
 
     public void addActionHistory(String action) {

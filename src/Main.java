@@ -16,7 +16,7 @@ public class Main {
         Deck deck = new Deck();
         Game game = new Game();
         Menu menu = new Menu(game);
-        Table table = new Table();
+        Table table = Table.getInstance();
         PlayerAction playerAction = new PlayerAction();
         Scanner scanner = new Scanner(System.in);
 
