@@ -1,3 +1,5 @@
+package helpers;
+
 import misc.Game;
 import misc.Table;
 import models.Player;
@@ -7,7 +9,7 @@ import java.util.Scanner;
 
 public class GameFlowActions {
 
-    public void gameActions(Scanner scanner, PlayerAction playerAction, Player player, Player human, Table table, Game game){
+    public static void gameActions(Scanner scanner, PlayerAction playerAction, Player player, Player human, Table table, Game game){
 
         if (player.equals(human) && !player.isFolded()) {
             System.out.println("Actions: c - call/check, r - raise, f - fold, a - all in");
