@@ -1,3 +1,5 @@
+package misc;
+
 public class Game {
 
     private boolean playing = false;
