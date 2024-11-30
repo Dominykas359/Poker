@@ -1,3 +1,5 @@
+package misc;
+
 public class Misc {
 
     public static void cleanScreen(){

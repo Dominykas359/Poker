@@ -1,6 +1,10 @@
+import misc.Game;
+import misc.Misc;
+import misc.Table;
 import models.Deck;
 import models.Hand;
 import models.Player;
+import strategy.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -13,6 +17,7 @@ public class Main {
         Game game = new Game();
         Menu menu = new Menu(game);
         Table table = new Table();
+        PlayerAction playerAction = new PlayerAction();
         Scanner scanner = new Scanner(System.in);
 
         String name;
@@ -110,26 +115,26 @@ public class Main {
 
                         switch (action) {
                             case "c":
-                                call(table, currentPlayer);
+                                playerAction.setMoveStrategy(new CallStrategy());
                                 break;
                             case "r":
-                                raise(scanner, table, currentPlayer);
+                                playerAction.setMoveStrategy(new RaiseStrategy());
                                 break;
                             case "f":
-                                currentPlayer.setFolded(true);
-                                table.addActionHistory(STR."\{currentPlayer.getName()} folded.");
+                                playerAction.setMoveStrategy(new FoldStrategy());
                                 break;
                             case "a":
-                                allIn(table, currentPlayer, game);
+                                playerAction.setMoveStrategy(new AllInStrategy());
                                 break;
                             case "x":
-                                System.exit(0);
+                                playerAction.setMoveStrategy(new ExitStrategy());
                                 break;
                             default:
                                 System.out.println("Choose a valid option!");
                         }
+                        playerAction.performMove(table, currentPlayer, scanner, game);
                     } else {
-                        call(table, currentPlayer);  // Automated call for computer players
+                        new CallStrategy().execute(table, currentPlayer, scanner, game);
                     }
 
                     table.displayTable();
@@ -186,26 +191,26 @@ public class Main {
 
                         switch (action) {
                             case "c":
-                                call(table, currentPlayer);
+                                playerAction.setMoveStrategy(new CallStrategy());
                                 break;
                             case "r":
-                                raise(scanner, table, currentPlayer);
+                                playerAction.setMoveStrategy(new RaiseStrategy());
                                 break;
                             case "f":
-                                currentPlayer.setFolded(true);
-                                table.addActionHistory(STR."\{currentPlayer.getName()} folded.");
+                                playerAction.setMoveStrategy(new FoldStrategy());
                                 break;
                             case "a":
-                                allIn(table, currentPlayer, game);
+                                playerAction.setMoveStrategy(new AllInStrategy());
                                 break;
                             case "x":
-                                System.exit(0);
+                                playerAction.setMoveStrategy(new ExitStrategy());
                                 break;
                             default:
                                 System.out.println("Choose a valid option!");
                         }
-                    } else if(!currentPlayer.equals(human) && !currentPlayer.isFolded()){
-                        call(table, currentPlayer);  // Automated call for computer players
+                        playerAction.performMove(table, currentPlayer, scanner, game);
+                    } else {
+                        new CallStrategy().execute(table, currentPlayer, scanner, game);
                     }
 
                     table.displayTable();
@@ -262,26 +267,26 @@ public class Main {
 
                         switch (action) {
                             case "c":
-                                call(table, currentPlayer);
+                                playerAction.setMoveStrategy(new CallStrategy());
                                 break;
                             case "r":
-                                raise(scanner, table, currentPlayer);
+                                playerAction.setMoveStrategy(new RaiseStrategy());
                                 break;
                             case "f":
-                                currentPlayer.setFolded(true);
-                                table.addActionHistory(STR."\{currentPlayer.getName()} folded.");
+                                playerAction.setMoveStrategy(new FoldStrategy());
                                 break;
                             case "a":
-                                allIn(table, currentPlayer, game);
+                                playerAction.setMoveStrategy(new AllInStrategy());
                                 break;
                             case "x":
-                                System.exit(0);
+                                playerAction.setMoveStrategy(new ExitStrategy());
                                 break;
                             default:
                                 System.out.println("Choose a valid option!");
                         }
-                    } else if(!currentPlayer.equals(human) && !currentPlayer.isFolded()) {
-                        call(table, currentPlayer);  // Automated call for computer players
+                        playerAction.performMove(table, currentPlayer, scanner, game);
+                    } else {
+                        new CallStrategy().execute(table, currentPlayer, scanner, game);
                     }
 
                     table.displayTable();
@@ -339,26 +344,26 @@ public class Main {
 
                         switch (action) {
                             case "c":
-                                call(table, currentPlayer);
+                                playerAction.setMoveStrategy(new CallStrategy());
                                 break;
                             case "r":
-                                raise(scanner, table, currentPlayer);
+                                playerAction.setMoveStrategy(new RaiseStrategy());
                                 break;
                             case "f":
-                                currentPlayer.setFolded(true);
-                                table.addActionHistory(STR."\{currentPlayer.getName()} folded.");
+                                playerAction.setMoveStrategy(new FoldStrategy());
                                 break;
                             case "a":
-                                allIn(table, currentPlayer, game);
+                                playerAction.setMoveStrategy(new AllInStrategy());
                                 break;
                             case "x":
-                                System.exit(0);
+                                playerAction.setMoveStrategy(new ExitStrategy());
                                 break;
                             default:
                                 System.out.println("Choose a valid option!");
                         }
-                    } else if(!currentPlayer.equals(human) && !currentPlayer.isFolded()){
-                        call(table, currentPlayer);  // Automated call for computer players
+                        playerAction.performMove(table, currentPlayer, scanner, game);
+                    } else {
+                        new CallStrategy().execute(table, currentPlayer, scanner, game);
                     }
 
                     table.displayTable();
@@ -419,85 +424,6 @@ public class Main {
         return players.stream()
                 .filter(player -> !player.isFolded())
                 .allMatch(player -> player.getBet() == currentBet && player.isMoved());
-    }
-
-    private static void call(Table table, Player player) {
-        double currentBet = table.getCurrentBet();  // Get the current bet
-        double amountToBet = currentBet - player.getBet(); // Calculate how much more the player needs to bet to call
-
-        // Check if the player can cover the amount they need to bet
-        if (amountToBet <= 0) {
-            player.setMoved(true);
-            // No need to bet anything (already matched or over bet)
-            table.addActionHistory(STR."\{player.getName()} called for $\{amountToBet}.");
-            return;
-        }
-
-        if(player.getBet() == 0 && table.getCurrentBet() == 0){
-            player.setBet(0);
-            player.setMoved(true);
-            table.addActionHistory(STR."\{player.getName()} called for $\{amountToBet}.");
-            return;
-        }
-
-        if (player.getMoney() >= amountToBet) {
-            // Player can call the bet
-            player.setMoney(player.getMoney() - amountToBet); // Deduct from player's money
-            player.setBet(player.getBet() + amountToBet); // Update player's total bet
-            player.setMoved(true);
-            table.addActionHistory(STR."\{player.getName()} called for $\{amountToBet}.");
-        } else {
-            // Player goes all-in
-            amountToBet = player.getMoney(); // They can only bet what they have
-            player.setBet(player.getBet() + amountToBet); // Update player's bet
-            player.setMoney(0); // Player is now out of money
-            player.setMoved(true);
-            table.addActionHistory(STR."\{player.getName()} called for $\{amountToBet}.");
-        }
-
-        // Update the prize money with the amount bet
-        table.setPrizeMoney(table.getPrizeMoney() + amountToBet);
-        if (player.getMoney() <= 0) player.setFolded(true);
-    }
-
-    private static void raise(Scanner scanner, Table table, Player player) {
-        System.out.print("Enter amount of money you want to raise: ");
-        double raisedMoney;
-        while (true) {
-            if (scanner.hasNextDouble()) {
-                raisedMoney = scanner.nextDouble();
-                scanner.nextLine(); // Clear newline
-                if (raisedMoney > 0 && raisedMoney <= player.getMoney()) {
-                    break;
-                } else {
-                    System.out.print("Please enter a valid amount: ");
-                }
-            } else {
-                System.out.print("Invalid input. Enter a valid amount: ");
-                scanner.next(); // Clear invalid input
-            }
-        }
-        player.setBet(player.getBet() + raisedMoney);
-        table.setCurrentBet(player.getBet()); // Update current bet to player's total bet
-        table.setPrizeMoney(table.getPrizeMoney() + raisedMoney);
-        player.setMoney(player.getMoney() - raisedMoney);
-        if (player.getMoney() <= 0) player.setFolded(true);
-        player.setMoved(true);
-        table.addActionHistory(STR."\{player.getName()} raised $ \{raisedMoney}.");
-    }
-
-    // Helper function to handle all-in action
-    private static void allIn(Table table, Player player, Game game) {
-        table.setCurrentBet(player.getBet() + player.getMoney());
-        table.setPrizeMoney(table.getPrizeMoney() + player.getMoney());
-        player.setBet(player.getBet() + player.getMoney());
-        player.setMoney(0);
-        game.setFlop(false);
-        game.setTurn(false);
-        game.setRiver(false);
-        if (player.getMoney() <= 0) player.setFolded(true);
-        player.setMoved(true);
-        table.addActionHistory(STR."\{player.getName()} went all in.");
     }
 
     private static void shiftBlinds(List<Player> players) {
