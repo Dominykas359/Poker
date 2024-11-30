@@ -1,3 +1,5 @@
+package misc;
+
 import misc.Game;
 import misc.Misc;
 

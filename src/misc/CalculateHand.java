@@ -1,3 +1,5 @@
+package misc;
+
 import models.Card;
 import models.Hand;
 
