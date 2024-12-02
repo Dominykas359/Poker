@@ -25,7 +25,7 @@ public class CalculateHand {
         return Collections.max(possibleHands, Comparator.comparingInt(Hand::getRankValue));
     }
 
-    private static Hand evaluateHand(List<Card> hand) {
+    public static Hand evaluateHand(List<Card> hand) {
         if (isRoyalFlush(hand)) return new Hand(10, hand);        // Royal Flush
         if (isStraightFlush(hand)) return new Hand(9, hand);      // Straight Flush
         if (isFourOfAKind(hand)) return new Hand(8, hand);        // Four of a Kind
